@@ -36,6 +36,6 @@ def get_db():
 if __name__ == "__main__":
     try:
         Base.metadata.create_all(bind=engine)
-        print("Testing connection with database.")
+        print("Tested connection with database sucessfully.")
     except Exception as e:
         print("An error occurred:", e)
