@@ -17,5 +17,15 @@ class User(Base):
     user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(Enum(UserRole), nullable=False, default="user") 
+    role = Column(Enum(UserRole), nullable=False, default="user")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+
+
+if __name__ == "__main__":
+    from src.app.config.database import engine
+
+    try:
+        Base.metadata.create_all(bind=engine) 
+        print("User table created.")
+    except Exception as e:
+        print("An error occurred during table creation:", e)
