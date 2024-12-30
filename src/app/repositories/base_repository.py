@@ -1,23 +1,23 @@
 from abc import ABC, abstractmethod
-
-
-class BaseRepository(ABC):
-    @abstractmethod
-    def get_one(self, id):
-        raise NotImplementedError
+from uuid import UUID
+class BaseRepository[T](ABC):
 
     @abstractmethod
-    def get_all(self):
-        raise NotImplementedError
+    def get(self, id: UUID) -> T:
+        return NotImplemented
 
     @abstractmethod
-    def add(self, id):
-        raise NotImplementedError
+    def get_all(self) -> list[T]:
+        return NotImplemented
 
     @abstractmethod
-    def update(self, id):
-        raise NotImplementedError
+    def add(self, **kwargs: object) -> None:
+        return NotImplemented
 
     @abstractmethod
-    def delete(self, id):
-        raise NotImplementedError
+    def update(self, id: UUID, **kwargs: object) -> None:
+        return NotImplemented
+
+    @abstractmethod
+    def delete(self, id: UUID) -> None:
+        return NotImplemented
