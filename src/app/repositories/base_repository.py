@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
+from typing import TypeVar
+
+T = TypeVar('T') 
 
 
 class BaseRepository[T](ABC):
