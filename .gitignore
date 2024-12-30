@@ -1,5 +1,3 @@
-data_model.dbml
 .env
-__pycache__/
 **/__pycache__/
 venv/
