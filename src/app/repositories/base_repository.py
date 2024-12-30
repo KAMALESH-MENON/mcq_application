@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
-class BaseRepository[T](ABC):
 
+
+class BaseRepository[T](ABC):
     @abstractmethod
     def get(self, id: UUID) -> T:
         return NotImplemented
