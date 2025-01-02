@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-load_dotenv()
+load_dotenv(override=True)
 
 DATABASE_URL = os.getenv("connection_url")
 
@@ -32,10 +32,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-if __name__ == "__main__":
-    try:
-        Base.metadata.create_all(bind=engine)
-        print("Testing connection with database.")
-    except Exception as e:
-        print("An error occurred:", e)
