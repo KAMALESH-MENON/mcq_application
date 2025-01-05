@@ -12,12 +12,11 @@ from sqlalchemy import (
     Integer,
     String,
     func,
-    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from src.app.config.database import Base
+from app.config.database import Base
 
 
 class UserRole(str, PyEnum):
