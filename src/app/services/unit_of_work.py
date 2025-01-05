@@ -1,12 +1,21 @@
+import os
 from abc import ABC
 
-from sqlalchemy.orm import Session
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from src.app.config.database import get_db
-from src.app.repositories.history_repository import HistoryRepository
-from src.app.repositories.mcq_repository import McqRepository
-from src.app.repositories.submission_repository import SubmissionRepository
-from src.app.repositories.user_repository import UserRepository
+from app.config.database import get_db
+from app.repositories.history_repository import HistoryRepository
+from app.repositories.mcq_repository import McqRepository
+from app.repositories.submission_repository import SubmissionRepository
+from app.repositories.user_repository import UserRepository
+
+load_dotenv(override=True)
+
+DATABASE_URL = os.getenv("connection_url")
+
+DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(DATABASE_URL))
 
 
 class BaseUnitOfWork(ABC):
@@ -26,11 +35,7 @@ class BaseUnitOfWork(ABC):
         self.session.close()
 
     def commit(self):
-        try:
-            self.session.commit()
-        except Exception as e:
-            self.rollback()
-            raise e
+        self.session.commit()
 
     def rollback(self):
         self.session.rollback()
