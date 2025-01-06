@@ -1,8 +1,7 @@
 from fastapi import FastAPI
-from src.app.config.database import Base, engine
-from src.app.models import data_models as models
+
+from app.routes import api
 
 app = FastAPI()
 
-models.Base.metadata.create_all(bind=engine)
-print("Tables created.")
+app.include_router(api.router)

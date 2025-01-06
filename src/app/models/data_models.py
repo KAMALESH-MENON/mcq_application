@@ -1,21 +1,28 @@
-from uuid import uuid4
 from enum import Enum as PyEnum
+from uuid import uuid4
+
 from sqlalchemy import (
-    Column, String,
-    Integer, Float,
-    JSON, Boolean,
-    TIMESTAMP, Enum,
-    ForeignKey, func,
-    text
-    )
+    JSON,
+    TIMESTAMP,
+    Boolean,
+    Column,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from src.app.config.database import Base
-from src.app.schemas.mcq_schemas import UserRole
+
+from app.config.database import Base
+
 
 class UserRole(str, PyEnum):
     ADMIN = "admin"
     USER = "user"
+
 
 class User(Base):
     __tablename__ = "users"
@@ -26,9 +33,15 @@ class User(Base):
     role = Column(Enum(UserRole), nullable=False, default="user")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
 
-    created_mcqs = relationship("MCQ", back_populates="creator", cascade="all, delete-orphan")
-    submissions = relationship("UserSubmission", back_populates="user", cascade="all, delete-orphan")
-    history = relationship("UserHistory", back_populates="user", cascade="all, delete-orphan")
+    created_mcqs = relationship(
+        "MCQ", back_populates="creator", cascade="all, delete-orphan"
+    )
+    submissions = relationship(
+        "UserSubmission", back_populates="user", cascade="all, delete-orphan"
+    )
+    history = relationship(
+        "UserHistory", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class UserSubmission(Base):
@@ -70,4 +83,6 @@ class MCQ(Base):
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
 
     creator = relationship("User", back_populates="created_mcqs")
-    submissions = relationship("UserSubmission", back_populates="mcq", cascade="all, delete-orphan")
+    submissions = relationship(
+        "UserSubmission", back_populates="mcq", cascade="all, delete-orphan"
+    )
