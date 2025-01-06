@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 
 from app.schemas.mcq_schemas import (
@@ -37,3 +39,15 @@ def me(current_user: UserOutput = Depends(user_services.get_current_user)):
     Returns authenticated users details
     """
     return current_user
+
+
+@router.get("/users", tags=["Admin"], response_model=List[UserOutput])
+def get_all_users(
+    current_user: UserOutput = Depends(user_services.get_current_user),
+) -> List[UserOutput]:
+    """
+    Get all users
+    """
+    unit_of_work = UserUnitOfWork()
+    users = user_services.get_all(unit_of_work=unit_of_work, current_user=current_user)
+    return users
