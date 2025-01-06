@@ -59,7 +59,6 @@ class UserRepository(BaseRepository[User]):
         """
         if self.check_user_exists(user.username):
             raise ValueError("Username already exists")
-        user.password = self.get_password_hash(password=user.password)
         self.session.add(user)
 
     def update(self, user_id: UUID, **kwargs):
