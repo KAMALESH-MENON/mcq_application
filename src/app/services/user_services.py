@@ -17,7 +17,6 @@ from app.schemas.mcq_schemas import (
     UserRegisterInput,
 )
 from app.services.unit_of_work import BaseUnitOfWork
-from app.utils.model_to_dict import model_to_dict
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 authorization_header_scheme = HTTPBearer()
@@ -68,19 +67,25 @@ def add(user: UserRegisterInput, unit_of_work: BaseUnitOfWork):
             raise HTTPException(status_code=400, detail=str(ve))
 
 
-def get_all(unit_of_work: BaseUnitOfWork) -> List[UserOutput]:
+def get_all(unit_of_work: BaseUnitOfWork, current_user: UserOutput) -> List[UserOutput]:
     """
-    Finds and returns a single user based on the UUID number
+    Finds and returns all users, accessible only to admin users.
 
-    Parameters
-    ----------
-    user_id: UUID
-    unit_of_work: BaseUnitOfWork
+    Parameters:
+        unit_of_work: BaseUnitOfWork
+        current_user: UserOutput (authenticated user's details)
 
     Returns
-    -------
+        List[UserOutput]: List of all users
 
+    Raises
+        HTTPException: If the user is not an admin.
     """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="Access denied. Admin role required."
+        )
+
     with unit_of_work:
         users = unit_of_work.user.get_all()
         if users is None:
