@@ -82,16 +82,18 @@ class UserRepository(BaseRepository[User]):
                 setattr(user, key, value)
             self.session.commit()
 
-    def delete(self, user_id: UUID):
+    def delete(self, user_id: UUID) -> bool:
         """
         Delete a user from the database.
 
         Parameters: user_id : UUID
             The unique identifier of the user to delete.
         """
-        user = self.get(user_id)
+        user = self.session.query(User).filter(User.user_id == user_id).first()
+        if user is None:
+            return False
         self.session.delete(user)
-        self.session.commit()
+        return True
 
     def check_username_exists(self, username: str) -> Union[User, None]:
         """
