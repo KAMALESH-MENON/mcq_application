@@ -1,6 +1,7 @@
 from typing import List
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 
 from app.schemas.mcq_schemas import MCQ, MCQCreate, UserOutput
 from app.services import McqUnitOfWork, UserUnitOfWork, mcq_services, user_services
@@ -18,6 +19,21 @@ def get_all_users(
     unit_of_work = UserUnitOfWork()
     users = user_services.get_all(unit_of_work=unit_of_work, current_user=current_user)
     return users
+
+
+@router.get("/users/{user_id}", response_model=UserOutput)
+def get_one_user(
+    user_id: UUID,
+    current_user: UserOutput = Depends(user_services.get_current_user),
+) -> List[UserOutput]:
+    """
+    Get one user
+    """
+    unit_of_work = UserUnitOfWork()
+    user = user_services.get(
+        unit_of_work=unit_of_work, user_id=user_id, current_user=current_user
+    )
+    return user
 
 
 @router.post("/bulk-upload", status_code=201)

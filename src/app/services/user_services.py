@@ -22,7 +22,9 @@ pwd_context = CryptContext(schemes=["bcrypt"])
 authorization_header_scheme = HTTPBearer()
 
 
-def get(user_id: UUID, unit_of_work: BaseUnitOfWork) -> UserOutput:
+def get(
+    user_id: UUID, unit_of_work: BaseUnitOfWork, current_user: UserOutput
+) -> UserOutput:
     """
     Finds and returns a single user based on the UUID number
 
@@ -35,6 +37,11 @@ def get(user_id: UUID, unit_of_work: BaseUnitOfWork) -> UserOutput:
     -------
 
     """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=401, detail="Access denied. Admin role required."
+        )
+
     with unit_of_work:
         target_user = unit_of_work.user.get(user_id=user_id)
         if target_user is None:
