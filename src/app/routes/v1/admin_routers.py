@@ -1,9 +1,9 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
 
-from app.schemas.mcq_schemas import MCQ, MCQCreate, UserOutput
+from app.schemas.mcq_schemas import MCQ, MCQCreate, UserOutput, UserUpdate
 from app.services import McqUnitOfWork, UserUnitOfWork, mcq_services, user_services
 
 router = APIRouter(prefix="/admin", tags=["Admin Routes"])
@@ -25,13 +25,29 @@ def get_all_users(
 def get_one_user(
     user_id: UUID,
     current_user: UserOutput = Depends(user_services.get_current_user),
-) -> List[UserOutput]:
+) -> UserOutput:
     """
     Get one user
     """
     unit_of_work = UserUnitOfWork()
     user = user_services.get(
         unit_of_work=unit_of_work, user_id=user_id, current_user=current_user
+    )
+    return user
+
+
+@router.patch("/users/{user_id}", status_code=200)
+def update_user(
+    user_id: UUID,
+    user_update: UserUpdate,
+    current_user: UserOutput = Depends(user_services.get_current_user),
+) -> UserOutput:
+    unit_of_work = UserUnitOfWork()
+    user = user_services.update(
+        unit_of_work=unit_of_work,
+        user_id=user_id,
+        current_user=current_user,
+        user_update=user_update,
     )
     return user
 
