@@ -36,6 +36,20 @@ def get_one_user(
     return user
 
 
+@router.delete("/users/{user_id}", status_code=204)
+def delete_user(
+    user_id: UUID,
+    current_user: UserOutput = Depends(user_services.get_current_user),
+):
+    """
+    Delete user
+    """
+    unit_of_work = UserUnitOfWork()
+    user_services.delete(
+        unit_of_work=unit_of_work, user_id=user_id, current_user=current_user
+    )
+
+
 @router.post("/bulk-upload", status_code=201)
 def bulk_upload_mcqs(
     file: UploadFile = File(...),
