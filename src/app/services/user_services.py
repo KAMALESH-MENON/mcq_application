@@ -18,7 +18,7 @@ from app.schemas.mcq_schemas import (
 )
 from app.services.unit_of_work import BaseUnitOfWork
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"])
 authorization_header_scheme = HTTPBearer()
 
 
@@ -57,6 +57,7 @@ def add(user: UserRegisterInput, unit_of_work: BaseUnitOfWork):
     """
     with unit_of_work:
         try:
+            user.password = get_password_hash(user.password)
             new_user = User(**user.model_dump())
             unit_of_work.user.add(user=new_user)
             unit_of_work.session.flush()
@@ -104,7 +105,7 @@ def login(login_data: UserLoginInput, unit_of_work: BaseUnitOfWork) -> UserLogin
 
     """
     with unit_of_work:
-        user = unit_of_work.user.check_user_exists(login_data.username)
+        user = unit_of_work.user.check_username_exists(login_data.username)
         if not check_user_access(user, login_data.password):
             raise HTTPException(
                 status_code=401, detail="Incorrect username or password"
@@ -151,6 +152,19 @@ def check_user_access(user: User, password: str):
     if not verify_password(password, user.password):
         return False
     return True
+
+
+def get_password_hash(password: str) -> str:
+    """
+    Creates hash from password using passlib library
+    Args:
+        password: raw password from input
+
+    Returns:
+        str: hashed password
+
+    """
+    return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
