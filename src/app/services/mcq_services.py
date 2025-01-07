@@ -1,3 +1,5 @@
+import random
+
 import pandas as pd
 from fastapi import HTTPException, UploadFile
 
@@ -104,3 +106,42 @@ def bulk_add_mcqs(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+
+def get_all(
+    unit_of_work: BaseUnitOfWork,
+    type: str,
+    page: int,
+    page_size: int,
+) -> dict:
+    """
+    Retrieve paginated MCQs with optional type filter and pagination.
+    """
+    with unit_of_work:
+        mcqs = unit_of_work.mcq.get_all(type_=type)
+
+        if not mcqs:
+            raise HTTPException(
+                status_code=404, detail="No MCQs found for the given type"
+            )
+
+        total_count = len(mcqs)
+        total_pages = (total_count // page_size) + (
+            1 if total_count % page_size > 0 else 0
+        )
+
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        random.shuffle(mcqs)
+        paginated_mcqs = mcqs[start:end]
+
+        response = {
+            "currentPage": page,
+            "totalPage": total_pages,
+            "nextPage": page + 1 if page < total_pages else None,
+            "totalCount": total_count,
+            "data": paginated_mcqs,
+        }
+
+        return response
