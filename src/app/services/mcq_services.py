@@ -42,7 +42,7 @@ def add_mcq(
     """
     if current_user.role != "admin":
         raise HTTPException(
-            status_code=403, detail="Access denied. Admin role required."
+            status_code=401, detail="Access denied. Admin role required."
         )
     with unit_of_work:
         mcq_data = mcq.model_dump()
@@ -76,7 +76,7 @@ def bulk_add_mcqs(
     """
     if current_user.role != "admin":
         raise HTTPException(
-            status_code=403, detail="Access denied. Admin role required."
+            status_code=401, detail="Access denied. Admin role required."
         )
 
     if not file.filename.endswith((".xlsx", ".xls")):
