@@ -84,7 +84,7 @@ def get_all(unit_of_work: BaseUnitOfWork, current_user: UserOutput) -> List[User
     """
     if current_user.role != "admin":
         raise HTTPException(
-            status_code=403, detail="Access denied. Admin role required."
+            status_code=401, detail="Access denied. Admin role required."
         )
 
     with unit_of_work:
