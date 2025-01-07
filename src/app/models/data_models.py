@@ -20,8 +20,8 @@ from app.config.database import Base
 
 
 class UserRole(str, PyEnum):
-    ADMIN = "admin"
-    USER = "user"
+    admin = "admin"
+    user = "user"
 
 
 class User(Base):
@@ -79,7 +79,7 @@ class MCQ(Base):
     type = Column(String, nullable=False)
     question = Column(String, nullable=False)
     options = Column(JSON, nullable=False)
-    correct_answer = Column(String, nullable=False)
+    correct_option = Column(String, nullable=False)
     created_by = Column(UUID, ForeignKey("users.user_id"), nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
 

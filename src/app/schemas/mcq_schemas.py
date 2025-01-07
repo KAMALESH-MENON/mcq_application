@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import UUID4, BaseModel
+from pydantic import UUID4, BaseModel, EmailStr
 
 
 class UserRole(str, Enum):
@@ -24,7 +24,9 @@ class UserBase(BaseModel):
     role: UserRole
 
 
-class UserRegisterInput(UserBase):
+class UserRegisterInput(BaseModel):
+    username: str
+    email: EmailStr
     password: str
 
 
@@ -60,14 +62,18 @@ class MCQBase(BaseModel):
     type: str
     question: str
     options: Options
-    correct_answer: OptionEnum
+    correct_option: OptionEnum
 
 
 class MCQCreate(MCQBase):
-    created_by: UUID4
+    pass
 
 
 class MCQ(MCQBase):
+    created_by: UUID4
+
+
+class MCQCreateOutput(MCQBase):
     mcq_id: UUID4
     created_at: datetime
 
