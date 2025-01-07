@@ -12,7 +12,7 @@ from app.services import UserUnitOfWork, user_services
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/register", response_model=UserRegisterOutput)
+@router.post("/register", response_model=UserRegisterOutput, status_code=201)
 def register(register_data: UserRegisterInput):
     """
     User Registration endpoint
