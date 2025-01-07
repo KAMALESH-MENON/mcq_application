@@ -57,8 +57,10 @@ class UserRepository(BaseRepository[User]):
         Raises: ValueError
             If the username already exists in the database.
         """
-        if self.check_user_exists(user.username):
-            raise ValueError("Username already exists")
+        if self.check_username_exists(user.username):
+            raise ValueError("Username already exists.")
+        if self.check_email_exists(user.email):
+            raise ValueError("Email already exists.")
         self.session.add(user)
 
     def update(self, user_id: UUID, **kwargs):
@@ -91,7 +93,7 @@ class UserRepository(BaseRepository[User]):
         self.session.delete(user)
         self.session.commit()
 
-    def check_user_exists(self, username: str) -> Union[User, None]:
+    def check_username_exists(self, username: str) -> Union[User, None]:
         """
         Parameters: username : str
             The username to check.
@@ -100,3 +102,13 @@ class UserRepository(BaseRepository[User]):
             The User object if the user exists, otherwise None.
         """
         return self.session.query(User).filter_by(username=username).first()
+
+    def check_email_exists(self, email: str) -> bool:
+        """
+        Parameters: email : str
+            The email to check.
+
+        Returns: bool
+            True if the email exists, otherwise False.
+        """
+        return self.session.query(User).filter_by(email=email).first() is not None
