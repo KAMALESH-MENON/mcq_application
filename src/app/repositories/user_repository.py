@@ -73,14 +73,13 @@ class UserRepository(BaseRepository[User]):
             **kwargs : dict
                 Key-value pairs of the attributes to update.
         """
-        existing_user = (
-            self.session.query(User).filter_by(username=kwargs.user.username).first()
-        )
+        existing_user = self.session.query(User).filter_by(user_id=user_id).first()
         if existing_user:
-            user = self.get(user_id)
             for key, value in kwargs.items():
-                setattr(user, key, value)
-            self.session.commit()
+                setattr(existing_user, key, value)
+        user = self.session.query(User).filter(User.user_id == user_id).first()
+        if user:
+            return UserOutput(**user.__dict__)
 
     def delete(self, user_id: UUID) -> bool:
         """
