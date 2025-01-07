@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import UUID4, BaseModel, EmailStr
 
@@ -36,6 +37,18 @@ class UserRegisterOutput(BaseModel):
 
 class UserOutput(UserBase):
     user_id: UUID4
+
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[UserRole] = None
+
+
+class UserUpdateOutput(BaseModel):
+    username: Optional[str]
+    email: Optional[EmailStr]
+    role: Optional[UserRole]
 
 
 class Options(BaseModel):
