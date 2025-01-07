@@ -86,23 +86,14 @@ def bulk_add_mcqs(
         df = pd.read_excel(file.file)
         added_count = 0
         with unit_of_work:
-            existing_types = fetch_mcq_types(unit_of_work=unit_of_work)
-            print("Exists: ---> ", existing_types)
-
             for _, row in df.iterrows():
                 mcq_data = {
                     "type": row.get("type"),
                     "question": row.get("question"),
                     "options": row.get("options"),
-                    "correct_answer": row.get("correct_answer"),
+                    "correct_option": row.get("correct_answer"),
                     "created_by": current_user.user_id,
                 }
-
-                if mcq_data["type"] not in existing_types:
-                    raise HTTPException(
-                        status_code=400, detail=f"Invalid MCQ type: {mcq_data['type']}"
-                    )
-
                 mcq = MCQ(**mcq_data)
                 unit_of_work.session.add(mcq)
                 added_count += 1
