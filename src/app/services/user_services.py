@@ -101,6 +101,28 @@ def get_all(unit_of_work: BaseUnitOfWork, current_user: UserOutput) -> List[User
     return users
 
 
+def delete(user_id: UUID, unit_of_work: BaseUnitOfWork, current_user: UserOutput):
+    """
+    Delete existing user
+
+    Parameters:
+        user_id: UUID
+        unit_of_work: BaseUnitOfWork
+        current_user: UserOutput (authenticated user's details)
+
+    Returns:
+        Bool
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=401, detail="Access denied. Admin role required."
+        )
+    with unit_of_work:
+        user = unit_of_work.user.delete(user_id=user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+
 def login(login_data: UserLoginInput, unit_of_work: BaseUnitOfWork) -> UserLoginOutput:
     """
     Authenticates user with password and username
