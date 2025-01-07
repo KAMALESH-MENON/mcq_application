@@ -15,6 +15,9 @@ from app.schemas.mcq_schemas import (
     UserLoginOutput,
     UserOutput,
     UserRegisterInput,
+    UserRole,
+    UserUpdate,
+    UserUpdateOutput,
 )
 from app.services.unit_of_work import BaseUnitOfWork
 
@@ -99,6 +102,45 @@ def get_all(unit_of_work: BaseUnitOfWork, current_user: UserOutput) -> List[User
         if users is None:
             raise HTTPException(status_code=404, detail="User not found")
     return users
+
+
+def update(
+    user_id: UUID,
+    unit_of_work: BaseUnitOfWork,
+    current_user: UserOutput,
+    user_update: UserUpdate,
+) -> UserUpdateOutput:
+    """
+    Update existing user
+
+    Parameters:
+        user_id: UUID
+        unit_of_work: BaseUnitOfWork
+        current_user: UserOutput (authenticated user's details)
+        user_update: User detail schema object
+
+    Returns:
+        UserUpdateOutput
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=401, detail="Access denied. Admin role required."
+        )
+
+    with unit_of_work:
+        target_user = unit_of_work.user.get(user_id=user_id)
+
+        if target_user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        data = user_update.model_dump(exclude_none=True)
+
+        user_update_dict = {
+            key: (value.value if isinstance(value, UserRole) else value)
+            for key, value in data.items()
+        }
+
+        user = unit_of_work.user.update(user_id=user_id, **user_update_dict)
+    return user
 
 
 def delete(user_id: UUID, unit_of_work: BaseUnitOfWork, current_user: UserOutput):
