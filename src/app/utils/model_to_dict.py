@@ -36,6 +36,11 @@ def model_to_dict(model):
                 value.second,
                 value.microsecond,
             )
+        elif isinstance(value, str) and value.startswith("{") and value.endswith("}"):
+            try:
+                formatted_dict[key] = eval(value)
+            except Exception:
+                formatted_dict[key] = value
         else:
             formatted_dict[key] = value
 
