@@ -61,10 +61,11 @@ def add(user: UserRegisterInput, unit_of_work: BaseUnitOfWork):
 
     Parameters
     ----------
-    user_id: UUID
-    unit_of_work: BaseUnitOfWork
+        user: UserRegisterInput (User Register object)
+        unit_of_work: BaseUnitOfWork
 
     Returns
+        user_id :  uuid of newly created user
     -------
 
     """

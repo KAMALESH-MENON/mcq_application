@@ -45,7 +45,7 @@ class UserRepository(BaseRepository[User]):
         users = self.session.query(User).all()
         return users
 
-    def add(self, user: UserRegisterInput):
+    def add(self, user: UserRegisterInput) -> None:
         """
         Add a new user to the database.
 
