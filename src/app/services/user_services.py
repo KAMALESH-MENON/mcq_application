@@ -20,6 +20,7 @@ from app.schemas.mcq_schemas import (
     UserUpdateOutput,
 )
 from app.services.unit_of_work import BaseUnitOfWork
+from app.utils.model_to_dict import model_to_dict
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 authorization_header_scheme = HTTPBearer()
@@ -47,9 +48,11 @@ def get(
 
     with unit_of_work:
         target_user = unit_of_work.user.get(user_id=user_id)
+
         if target_user is None:
             raise HTTPException(status_code=404, detail="User not found")
-    return target_user
+
+        return UserOutput(**model_to_dict(target_user))
 
 
 def add(user: UserRegisterInput, unit_of_work: BaseUnitOfWork):
