@@ -22,19 +22,18 @@ class UserRepository(BaseRepository[User]):
         """
         self.session = session
 
-    def get(self, user_id: UUID) -> Union[UserOutput, None]:
+    def get(self, user_id: UUID) -> User:
         """
         Retrieve a single user by their UUID.
 
         Parameters: user_id : UUID
 
-        Returns: Union[UserOutput, None]
-            The user details as a UserOutput object if found, otherwise None.
+        Returns: User
+            The User object
+
         """
         user = self.session.query(User).filter(User.user_id == user_id).first()
-        if user:
-            return UserOutput(**user.__dict__)
-        return None
+        return user
 
     def get_all(self) -> List[Union[UserOutput, None]]:
         """
