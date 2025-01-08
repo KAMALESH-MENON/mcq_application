@@ -12,7 +12,7 @@ from app.schemas.mcq_schemas import (
 )
 from app.services import McqUnitOfWork, UserUnitOfWork, mcq_services, user_services
 
-router = APIRouter(prefix="/admin", tags=["Admin Routes"])
+router = APIRouter(prefix="/quizify", tags=["Admin Routes"])
 
 
 @router.get("/users", response_model=List[UserOutput])
