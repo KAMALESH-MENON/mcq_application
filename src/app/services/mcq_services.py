@@ -11,7 +11,7 @@ from app.schemas.mcq_schemas import (
     UserOutput,
 )
 from app.services.unit_of_work import BaseUnitOfWork
-from app.utils.model_to_dict import model_to_dict, pydantic_to_dict
+from app.utils.model_to_dict import model_to_dict
 
 
 def fetch_mcq_types(unit_of_work: BaseUnitOfWork) -> list[str]:
