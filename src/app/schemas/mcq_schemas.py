@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Any, List, Optional
 
 from pydantic import UUID4, BaseModel, EmailStr
 
@@ -108,3 +108,11 @@ class UserHistory(BaseModel):
     percentage: float
     total_attempts: int
     attempted_at: datetime
+
+
+class PaginatedResponse(BaseModel):
+    currentPage: int
+    totalPage: int
+    nextPage: Optional[int]
+    totalCount: int
+    data: List[Any]
