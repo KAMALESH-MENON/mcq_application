@@ -15,7 +15,6 @@ from app.schemas.mcq_schemas import (
     UserLoginOutput,
     UserOutput,
     UserRegisterInput,
-    UserRole,
     UserUpdate,
     UserUpdateOutput,
 )
@@ -279,3 +278,21 @@ def get_current_user(
         raise HTTPException(status_code=500, detail="Invalid Token")
 
     return UserOutput(**decoded_token)
+
+
+def refresh_token(token: str) -> dict:
+    """
+    refresh access token
+
+    Args:
+        token: current token
+
+    Returns:
+        dict: containing access_token and token_type
+
+    """
+    to_encode = jwt.decode(
+        token, app_config["SECRET_KEY"], algorithms=app_config["ALGORITHM"]
+    )
+    access_token = create_access_token(to_encode)
+    return {"access_token": access_token, "token_type": "Bearer"}
