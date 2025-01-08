@@ -61,7 +61,7 @@ class UserRepository(BaseRepository[User]):
             raise ValueError("Email already exists.")
         self.session.add(user)
 
-    def update(self, user_id: UUID, **kwargs):
+    def update(self, user_id: UUID, **kwargs) -> None:
         """
         Update user details.
 
@@ -71,13 +71,10 @@ class UserRepository(BaseRepository[User]):
             **kwargs : dict
                 Key-value pairs of the attributes to update.
         """
-        existing_user = self.session.query(User).filter_by(user_id=user_id).first()
+        existing_user = self.get(user_id=user_id)
         if existing_user:
             for key, value in kwargs.items():
                 setattr(existing_user, key, value)
-        user = self.session.query(User).filter(User.user_id == user_id).first()
-        if user:
-            return UserOutput(**user.__dict__)
 
     def delete(self, user_id: UUID) -> bool:
         """

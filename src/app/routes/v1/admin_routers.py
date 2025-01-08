@@ -3,7 +3,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
-from app.schemas.mcq_schemas import MCQ, MCQCreate, UserOutput, UserUpdate
+from app.schemas.mcq_schemas import (
+    MCQ,
+    MCQCreate,
+    UserOutput,
+    UserUpdate,
+    UserUpdateOutput,
+)
 from app.services import McqUnitOfWork, UserUnitOfWork, mcq_services, user_services
 
 router = APIRouter(prefix="/admin", tags=["Admin Routes"])
@@ -41,7 +47,10 @@ def update_user(
     user_id: UUID,
     user_update: UserUpdate,
     current_user: UserOutput = Depends(user_services.get_current_user),
-) -> UserOutput:
+) -> UserUpdateOutput:
+    """
+    update user details
+    """
     unit_of_work = UserUnitOfWork()
     user = user_services.update(
         unit_of_work=unit_of_work,

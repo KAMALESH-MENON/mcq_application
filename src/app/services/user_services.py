@@ -133,18 +133,14 @@ def update(
 
     with unit_of_work:
         target_user = unit_of_work.user.get(user_id=user_id)
-
         if target_user is None:
             raise HTTPException(status_code=404, detail="User not found")
-        data = user_update.model_dump(exclude_none=True)
-
-        user_update_dict = {
-            key: (value.value if isinstance(value, UserRole) else value)
-            for key, value in data.items()
-        }
-
-        user = unit_of_work.user.update(user_id=user_id, **user_update_dict)
-    return user
+        unit_of_work.user.update(
+            user_id=user_id, **user_update.model_dump(exclude_none=True)
+        )
+    with unit_of_work:
+        updated_user = unit_of_work.user.get(user_id=user_id)
+        return UserUpdateOutput(**model_to_dict(updated_user))
 
 
 def delete(user_id: UUID, unit_of_work: BaseUnitOfWork, current_user: UserOutput):
