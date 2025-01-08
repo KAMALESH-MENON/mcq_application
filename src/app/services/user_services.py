@@ -104,7 +104,7 @@ def get_all(unit_of_work: BaseUnitOfWork, current_user: UserOutput) -> List[User
         users = unit_of_work.user.get_all()
         if users is None:
             raise HTTPException(status_code=404, detail="User not found")
-    return users
+        return [UserOutput(**model_to_dict(user)) for user in users]
 
 
 def update(

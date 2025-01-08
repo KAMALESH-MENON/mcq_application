@@ -35,15 +35,14 @@ class UserRepository(BaseRepository[User]):
         user = self.session.query(User).filter(User.user_id == user_id).first()
         return user
 
-    def get_all(self) -> List[Union[UserOutput, None]]:
+    def get_all(self) -> List[User]:
         """
         Retrieve all users from the database.
 
-        Returns: List[Union[UserOutput, None]]
-            A list of UserOutput objects representing all users.
+        Returns: List[User]
+            A list of User objects.
         """
-        target_users = self.session.query(User).all()
-        users = [UserOutput(**user.__dict__) for user in target_users]
+        users = self.session.query(User).all()
         return users
 
     def add(self, user: UserRegisterInput):
