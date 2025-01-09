@@ -1,7 +1,17 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.schemas.mcq_schemas import PaginatedResponse, UserOutput
-from app.services import McqUnitOfWork, mcq_services, user_services
+from app.schemas.mcq_schemas import (
+    PaginatedResponse,
+    SubmissionInput,
+    SubmissionOutput,
+    UserOutput,
+)
+from app.services import (
+    McqUnitOfWork,
+    SubmissionUnitOfWork,
+    mcq_services,
+    user_services,
+)
 
 router = APIRouter(prefix="/quizify/mcqs", tags=["User Routes for MCQ app"])
 
@@ -37,3 +47,18 @@ async def get_random_mcqs(
         unit_of_work=unit_of_work, type=type, page_size=page_size, page=page
     )
     return mcqs
+
+
+@router.post("/submit", response_model=SubmissionOutput)
+def submit_answers(
+    submission: SubmissionInput,
+    current_user: UserOutput = Depends(user_services.get_current_user),
+):
+    """
+    Endpoint to submit MCQ.
+    """
+    unit_of_work = SubmissionUnitOfWork()
+    result = mcq_services.process_submission(
+        submission=submission, unit_of_work=unit_of_work, current_user=current_user
+    )
+    return result
