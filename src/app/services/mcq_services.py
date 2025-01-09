@@ -11,9 +11,14 @@ from app.schemas.mcq_schemas import (
     PaginatedResponse,
     SubmissionInput,
     SubmissionOutput,
+    UserHistoryInput,
     UserOutput,
 )
-from app.services.unit_of_work import BaseUnitOfWork, SubmissionUnitOfWork
+from app.services.unit_of_work import (
+    BaseUnitOfWork,
+    HistoryUnitOfWork,
+    SubmissionUnitOfWork,
+)
 from app.utils.model_to_dict import model_to_dict
 
 
@@ -233,3 +238,24 @@ def process_submission(
             total_attempts=total_questions,
             percentage=percentage,
         )
+
+
+def view_history_of_submission_of_user(
+    unit_of_work: HistoryUnitOfWork, current_user: UserOutput
+):
+    """
+    Retrieves the submission histories for the current user.
+
+    Parameters:
+        unit_of_work : HistoryUnitOfWork
+            The Unit of Work instance for managing database transactions.
+        current_user : UserOutput
+            The current logged-in user.
+
+    Returns:
+        List[UserHistoryInput]
+            A list of the user's submission history records.
+    """
+    with unit_of_work as uow:
+        histories = uow.history.get_all(user_id=current_user.user_id)
+        return [UserHistoryInput(**history.__dict__) for history in histories]
