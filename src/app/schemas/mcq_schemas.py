@@ -91,18 +91,33 @@ class MCQCreateOutput(MCQBase):
     created_at: datetime
 
 
-class SubmissionInput(BaseModel):
-    user_id: UUID4
+class AttemptedMcq(BaseModel):
     mcq_id: UUID4
-    user_answer: str
-    is_correct: bool
+    user_answer: OptionEnum
 
 
-class SubmissionOutput(SubmissionInput):
-    pass
+class SubmissionInput(BaseModel):
+    attempted: List[AttemptedMcq]
 
 
-class UserHistory(BaseModel):
+class AttemptedMcqWithAnswer(BaseModel):
+    mcq_id: UUID4
+    type: str
+    question: str
+    options: Options
+    correct_option: OptionEnum
+    user_answer: OptionEnum
+
+
+class SubmissionOutput(BaseModel):
+    user_id: UUID4
+    total_score: int
+    total_attempts: int
+    percentage: float
+    data: List[AttemptedMcqWithAnswer]
+
+
+class UserHistoryInput(BaseModel):
     user_id: UUID4
     total_score: float
     percentage: float
