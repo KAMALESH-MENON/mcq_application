@@ -3,14 +3,17 @@ import random
 import pandas as pd
 from fastapi import HTTPException, UploadFile
 
-from app.models.data_models import MCQ
+from app.models.data_models import MCQ, UserHistory, UserSubmission
 from app.schemas.mcq_schemas import (
+    AttemptedMcqWithAnswer,
     MCQCreate,
     MCQCreateOutput,
     PaginatedResponse,
+    SubmissionInput,
+    SubmissionOutput,
     UserOutput,
 )
-from app.services.unit_of_work import BaseUnitOfWork
+from app.services.unit_of_work import BaseUnitOfWork, SubmissionUnitOfWork
 from app.utils.model_to_dict import model_to_dict
 
 
@@ -153,4 +156,80 @@ def get_all(
             nextPage=next_page,
             totalCount=total_count,
             data=paginated_mcqs_list_object,
+        )
+
+
+def process_submission(
+    submission: SubmissionInput,
+    unit_of_work: SubmissionUnitOfWork,
+    current_user: UserOutput,
+) -> SubmissionOutput:
+    """
+    Processes the submission of MCQ answers, calculates the score and percentage,
+    and updates the user's submission history.
+
+    Parameters:
+        submission : SubmissionInput
+            The submission data containing user ID and attempted MCQs.
+        unit_of_work : SubmissionUnitOfWork
+            The Unit of Work instance for managing database transactions.
+        current_user : UserOutput
+            The current logged-in user.
+
+    Returns:
+        SubmissionOutput The output containing user ID, details of the attempted MCQs, and the percentage score.
+
+    Raises:
+        HTTPException If an MCQ is not found.
+    """
+    user_id = current_user.user_id
+    total_score = 0
+    total_questions = len(submission.attempted)
+    submission_details = []
+
+    with unit_of_work as uow:
+        for attempted_mcq in submission.attempted:
+            mcq = uow.mcq.get(mcq_id=attempted_mcq.mcq_id)
+            if not mcq:
+                raise HTTPException(
+                    status_code=404, detail=f"MCQ {attempted_mcq.mcq_id} not found"
+                )
+            is_correct = attempted_mcq.user_answer.value == mcq.correct_option
+            total_score += 1 if is_correct else 0
+
+            user_submission = UserSubmission(
+                user_id=current_user.user_id,
+                mcq_id=mcq.mcq_id,
+                user_answer=attempted_mcq.user_answer.value,
+                is_correct=is_correct,
+            )
+            uow.submission.add(user_submission)
+
+            mcq_dict = {
+                "mcq_id": mcq.mcq_id,
+                "type": mcq.type,
+                "question": mcq.question,
+                "options": eval(mcq.options),
+                "correct_option": mcq.correct_option,
+                "user_answer": attempted_mcq.user_answer.value,
+            }
+
+            submission_details.append(AttemptedMcqWithAnswer(**mcq_dict))
+
+        percentage = (total_score / total_questions) * 100
+
+        user_history = UserHistory(
+            user_id=user_id,
+            total_score=total_score,
+            percentage=percentage,
+            total_attempts=total_questions,
+        )
+        uow.history.add(user_history)
+
+        return SubmissionOutput(
+            user_id=user_id,
+            data=submission_details,
+            total_score=total_score,
+            total_attempts=total_questions,
+            percentage=percentage,
         )
