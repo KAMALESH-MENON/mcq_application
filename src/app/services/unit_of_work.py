@@ -6,9 +6,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.config.database import get_db
-# from app.repositories.history_repository import HistoryRepository
+from app.repositories.history_repository import HistoryRepository
 from app.repositories.mcq_repository import McqRepository
-# from app.repositories.submission_repository import SubmissionRepository
+from app.repositories.submission_repository import SubmissionRepository
 from app.repositories.user_repository import UserRepository
 
 load_dotenv(override=True)
@@ -48,11 +48,13 @@ class UserUnitOfWork(BaseUnitOfWork):
         return self
 
 
-# class SubmissionUnitOfWork(BaseUnitOfWork):
-#     def __enter__(self):
-#         super().__enter__()
-#         self.submission = SubmissionRepository(self.session)
-#         return self
+class SubmissionUnitOfWork(BaseUnitOfWork):
+    def __enter__(self):
+        super().__enter__()
+        self.mcq = McqRepository(self.session)
+        self.submission = SubmissionRepository(self.session)
+        self.history = HistoryRepository(self.session)
+        return self
 
 
 class McqUnitOfWork(BaseUnitOfWork):
@@ -62,8 +64,8 @@ class McqUnitOfWork(BaseUnitOfWork):
         return self
 
 
-# class HistoryUnitOfWork(BaseUnitOfWork):
-#     def __enter__(self):
-#         super().__enter__()
-#         self.history = HistoryRepository(self.session)
-#         return self
+class HistoryUnitOfWork(BaseUnitOfWork):
+    def __enter__(self):
+        super().__enter__()
+        self.history = HistoryRepository(self.session)
+        return self
