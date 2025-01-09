@@ -1,12 +1,16 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, Query
 
 from app.schemas.mcq_schemas import (
     PaginatedResponse,
     SubmissionInput,
     SubmissionOutput,
+    UserHistoryInput,
     UserOutput,
 )
 from app.services import (
+    HistoryUnitOfWork,
     McqUnitOfWork,
     SubmissionUnitOfWork,
     mcq_services,
@@ -16,7 +20,7 @@ from app.services import (
 router = APIRouter(prefix="/quizify/mcqs", tags=["User Routes for MCQ app"])
 
 
-@router.get("/types", response_model=list[str])
+@router.get("/types", response_model=List[str])
 def get_mcq_types(current_user: UserOutput = Depends(user_services.get_current_user)):
     """
     Endpoint to fetch distinct MCQ types.
@@ -60,5 +64,19 @@ def submit_answers(
     unit_of_work = SubmissionUnitOfWork()
     result = mcq_services.process_submission(
         submission=submission, unit_of_work=unit_of_work, current_user=current_user
+    )
+    return result
+
+
+@router.post("/history", response_model=List[UserHistoryInput])
+def user_submission_history(
+    current_user: UserOutput = Depends(user_services.get_current_user),
+):
+    """
+    Endpoint to see user's submissions history.
+    """
+    unit_of_work = HistoryUnitOfWork()
+    result = mcq_services.view_history_of_submission_of_user(
+        unit_of_work=unit_of_work, current_user=current_user
     )
     return result
