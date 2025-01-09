@@ -1,21 +1,10 @@
-import os
 from abc import ABC
-
-from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from app.config.database import get_db
 from app.repositories.history_repository import HistoryRepository
 from app.repositories.mcq_repository import McqRepository
 from app.repositories.submission_repository import SubmissionRepository
 from app.repositories.user_repository import UserRepository
-
-load_dotenv(override=True)
-
-DATABASE_URL = os.getenv("connection_url")
-
-DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(DATABASE_URL))
 
 
 class BaseUnitOfWork(ABC):
