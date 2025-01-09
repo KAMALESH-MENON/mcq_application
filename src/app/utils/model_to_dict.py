@@ -27,15 +27,9 @@ def model_to_dict(model):
         elif isinstance(value, Enum):
             formatted_dict[key] = value.value
         elif isinstance(value, datetime):
-            formatted_dict[key] = (
-                value.year,
-                value.month,
-                value.day,
-                value.hour,
-                value.minute,
-                value.second,
-                value.microsecond,
-            )
+            formatted_dict[
+                key
+            ] = f"{value.year}/{value.month}/{value.day}, {value.hour}:{value.minute}:{value.second}:{value.microsecond}"
         elif isinstance(value, str) and value.startswith("{") and value.endswith("}"):
             try:
                 formatted_dict[key] = eval(value)
