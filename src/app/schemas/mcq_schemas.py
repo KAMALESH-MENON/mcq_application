@@ -86,6 +86,13 @@ class MCQ(MCQBase):
     created_by: UUID4
 
 
+class MCQDisplay(BaseModel):
+    type: str
+    mcq_id: UUID4
+    question: str
+    options: Options
+
+
 class MCQCreateOutput(MCQBase):
     mcq_id: UUID4
     created_at: datetime
