@@ -8,6 +8,7 @@ from app.schemas.mcq_schemas import (
     AttemptedMcqWithAnswer,
     MCQCreate,
     MCQCreateOutput,
+    MCQDisplay,
     PaginatedResponse,
     SubmissionInput,
     SubmissionOutput,
@@ -19,7 +20,6 @@ from app.services.unit_of_work import (
     HistoryUnitOfWork,
     SubmissionUnitOfWork,
 )
-from app.utils.model_to_dict import model_to_dict
 
 
 def fetch_mcq_types(unit_of_work: BaseUnitOfWork) -> list[str]:
@@ -135,7 +135,15 @@ def get_all(
         if mcqs is None:
             raise HTTPException(status_code=404, detail="User not found")
 
-        mcqs_list_object = [(MCQCreate(**model_to_dict(mcq))) for mcq in mcqs]
+        mcqs_list_object = []
+        for mcq in mcqs:
+            mcq_dict = {
+                "mcq_id": mcq.mcq_id,
+                "type": mcq.type,
+                "question": mcq.question,
+                "options": eval(mcq.options),
+            }
+            mcqs_list_object.append(MCQDisplay(**mcq_dict))
 
         if not mcqs_list_object:
             raise HTTPException(
