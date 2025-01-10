@@ -1,6 +1,6 @@
 from .unit_of_work import (
-    UserUnitOfWork, 
-    McqUnitOfWork, 
-    HistoryUnitOfWork, 
+    UserUnitOfWork,
+    McqUnitOfWork,
+    HistoryUnitOfWork,
     SubmissionUnitOfWork,
     )

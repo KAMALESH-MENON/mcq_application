@@ -1,11 +1,18 @@
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
-from app.schemas.mcq_schemas import MCQ, MCQCreate, UserOutput
+from app.schemas.mcq_schemas import (
+    MCQ,
+    MCQCreate,
+    UserOutput,
+    UserUpdate,
+    UserUpdateOutput,
+)
 from app.services import McqUnitOfWork, UserUnitOfWork, mcq_services, user_services
 
-router = APIRouter(prefix="/admin", tags=["Admin Routes"])
+router = APIRouter(prefix="/quizify", tags=["Admin Routes"])
 
 
 @router.get("/users", response_model=List[UserOutput])
@@ -18,6 +25,54 @@ def get_all_users(
     unit_of_work = UserUnitOfWork()
     users = user_services.get_all(unit_of_work=unit_of_work, current_user=current_user)
     return users
+
+
+@router.get("/users/{user_id}", response_model=UserOutput)
+def get_one_user(
+    user_id: UUID,
+    current_user: UserOutput = Depends(user_services.get_current_user),
+) -> UserOutput:
+    """
+    Get one user
+    """
+    unit_of_work = UserUnitOfWork()
+    user = user_services.get(
+        unit_of_work=unit_of_work, user_id=user_id, current_user=current_user
+    )
+    return user
+
+
+@router.patch("/users/{user_id}", status_code=200)
+def update_user(
+    user_id: UUID,
+    user_update: UserUpdate,
+    current_user: UserOutput = Depends(user_services.get_current_user),
+) -> UserUpdateOutput:
+    """
+    update user details
+    """
+    unit_of_work = UserUnitOfWork()
+    user = user_services.update(
+        unit_of_work=unit_of_work,
+        user_id=user_id,
+        current_user=current_user,
+        user_update=user_update,
+    )
+    return user
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_user(
+    user_id: UUID,
+    current_user: UserOutput = Depends(user_services.get_current_user),
+):
+    """
+    Delete user
+    """
+    unit_of_work = UserUnitOfWork()
+    user_services.delete(
+        unit_of_work=unit_of_work, user_id=user_id, current_user=current_user
+    )
 
 
 @router.post("/bulk-upload", status_code=201)

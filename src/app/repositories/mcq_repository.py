@@ -1,72 +1,90 @@
-import ast
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import TypeAdapter
 from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
 from app.models.data_models import MCQ
 from app.repositories.base_repository import BaseRepository
-from app.schemas.mcq_schemas import MCQCreate, MCQCreateOutput
-
-adapter = TypeAdapter(MCQCreate)
+from app.schemas.mcq_schemas import MCQCreate
 
 
 class McqRepository(BaseRepository[MCQ]):
+    """A repository class for managing `MCQ` objects in the database."""
+
     def __init__(self, session: Session):
+        """
+        Initialize the UserRepository with a database session.
+
+        Parameters: session : Session(SQLAlchemy session object)
+        """
         self.session = session
 
-    def get(self, mcq_id: UUID) -> Optional[MCQ]:
+    def get(self, mcq_id: UUID) -> MCQ:
         """
-        Retrieve an MCQ by its ID.
+        Retrieve a single user by their UUID.
+
+        Parameters: mcq_id : UUID
+
+        Returns: MCQ
+            The MCQ object
+
         """
         return self.session.query(MCQ).filter(MCQ.mcq_id == mcq_id).first()
 
     def get_all(
         self,
         type_: Optional[str] = None,
-    ) -> List[MCQCreate]:
+    ) -> List[MCQ]:
         """
-        Retrieve MCQs with optional filtering by type and pagination.
+        Retrieve all mcq from the database.
+
+        Returns: List[MCQ]
+            A list of MCQ objects.
         """
         query = self.session.query(MCQ)
 
         if type_:
-            mcqs = query.filter(MCQ.type == type_)
+            query = query.filter(MCQ.type == type_)
 
-        mcqs_dict = []
-        for mcq in mcqs:
-            mcq_dict = mcq.__dict__.copy()
-            mcq_dict["options"] = ast.literal_eval(
-                mcq_dict["options"]
-            )  # converting string to dict
-            mcqs_dict.append(mcq_dict)
-        return [adapter.validate_python(mcq) for mcq in mcqs_dict]
+        return query.all()
 
     def add(self, mcq: MCQCreate) -> None:
         """
         Add a new MCQ to the database.
+
+        Parameters: user : MCQCreate
+            The mcq details for MCQCreate.
         """
         self.session.add(mcq)
 
     def update(self, mcq_id: UUID, **kwargs) -> None:
         """
         Update an MCQ with given fields.
+
+        Parameters:
+            mcq_id : UUID
+                The unique identifier of the user to update.
+            **kwargs : dict
+                Key-value pairs of the attributes to update.
         """
         mcq = self.get(mcq_id)
         if mcq:
             for key, value in kwargs.items():
                 setattr(mcq, key, value)
-            self.session.commit()
 
-    def delete(self, mcq_id: UUID):
+    def delete(self, mcq_id: UUID) -> bool:
         """
         Delete an MCQ by its ID.
+
+        Parameters: user_id : UUID
+            The unique identifier of the user to delete.
         """
-        user = self.get(mcq_id)
-        self.session.delete(user)
-        self.session.commit()
+        mcq = self.get(mcq_id)
+        if mcq is None:
+            return False
+        self.session.delete(mcq)
+        return True
 
     def get_mcq_types(self) -> list[str]:
         """
@@ -76,4 +94,4 @@ class McqRepository(BaseRepository[MCQ]):
             list[str]: List of distinct MCQ types.
         """
         types = self.session.query(distinct(MCQ.type)).all()
-        return [type_[0] for type_ in types]
+        return [str(type_[0]) for type_ in types]

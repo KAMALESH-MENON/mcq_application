@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any, List, Optional
 
 from pydantic import UUID4, BaseModel, EmailStr
 
@@ -38,6 +39,18 @@ class UserOutput(UserBase):
     user_id: UUID4
 
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[UserRole] = None
+
+
+class UserUpdateOutput(BaseModel):
+    username: Optional[str]
+    email: Optional[EmailStr]
+    role: Optional[UserRole]
+
+
 class Options(BaseModel):
     a: str
     b: str
@@ -73,25 +86,55 @@ class MCQ(MCQBase):
     created_by: UUID4
 
 
+class MCQDisplay(BaseModel):
+    type: str
+    mcq_id: UUID4
+    question: str
+    options: Options
+
+
 class MCQCreateOutput(MCQBase):
     mcq_id: UUID4
     created_at: datetime
 
 
-class SubmissionInput(BaseModel):
-    user_id: UUID4
+class AttemptedMcq(BaseModel):
     mcq_id: UUID4
-    user_answer: str
-    is_correct: bool
+    user_answer: OptionEnum
 
 
-class SubmissionOutput(SubmissionInput):
-    pass
+class SubmissionInput(BaseModel):
+    attempted: List[AttemptedMcq]
 
 
-class UserHistory(BaseModel):
+class AttemptedMcqWithAnswer(BaseModel):
+    mcq_id: UUID4
+    type: str
+    question: str
+    options: Options
+    correct_option: OptionEnum
+    user_answer: OptionEnum
+
+
+class SubmissionOutput(BaseModel):
+    user_id: UUID4
+    total_score: int
+    total_attempts: int
+    percentage: float
+    data: List[AttemptedMcqWithAnswer]
+
+
+class UserHistoryInput(BaseModel):
     user_id: UUID4
     total_score: float
     percentage: float
     total_attempts: int
     attempted_at: datetime
+
+
+class PaginatedResponse(BaseModel):
+    currentPage: int
+    totalPage: int
+    nextPage: Optional[int]
+    totalCount: int
+    data: List[Any]

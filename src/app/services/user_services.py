@@ -15,14 +15,19 @@ from app.schemas.mcq_schemas import (
     UserLoginOutput,
     UserOutput,
     UserRegisterInput,
+    UserUpdate,
+    UserUpdateOutput,
 )
 from app.services.unit_of_work import BaseUnitOfWork
+from app.utils.model_to_dict import model_to_dict
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 authorization_header_scheme = HTTPBearer()
 
 
-def get(user_id: UUID, unit_of_work: BaseUnitOfWork) -> UserOutput:
+def get(
+    user_id: UUID, unit_of_work: BaseUnitOfWork, current_user: UserOutput
+) -> UserOutput:
     """
     Finds and returns a single user based on the UUID number
 
@@ -35,11 +40,18 @@ def get(user_id: UUID, unit_of_work: BaseUnitOfWork) -> UserOutput:
     -------
 
     """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=401, detail="Access denied. Admin role required."
+        )
+
     with unit_of_work:
         target_user = unit_of_work.user.get(user_id=user_id)
+
         if target_user is None:
             raise HTTPException(status_code=404, detail="User not found")
-    return target_user
+
+        return UserOutput(**model_to_dict(target_user))
 
 
 def add(user: UserRegisterInput, unit_of_work: BaseUnitOfWork):
@@ -48,10 +60,11 @@ def add(user: UserRegisterInput, unit_of_work: BaseUnitOfWork):
 
     Parameters
     ----------
-    user_id: UUID
-    unit_of_work: BaseUnitOfWork
+        user: UserRegisterInput (User Register object)
+        unit_of_work: BaseUnitOfWork
 
     Returns
+        user_id :  uuid of newly created user
     -------
 
     """
@@ -84,14 +97,71 @@ def get_all(unit_of_work: BaseUnitOfWork, current_user: UserOutput) -> List[User
     """
     if current_user.role != "admin":
         raise HTTPException(
-            status_code=403, detail="Access denied. Admin role required."
+            status_code=401, detail="Access denied. Admin role required."
         )
 
     with unit_of_work:
         users = unit_of_work.user.get_all()
         if users is None:
             raise HTTPException(status_code=404, detail="User not found")
-    return users
+        return [UserOutput(**model_to_dict(user)) for user in users]
+
+
+def update(
+    user_id: UUID,
+    unit_of_work: BaseUnitOfWork,
+    current_user: UserOutput,
+    user_update: UserUpdate,
+) -> UserUpdateOutput:
+    """
+    Update existing user
+
+    Parameters:
+        user_id: UUID
+        unit_of_work: BaseUnitOfWork
+        current_user: UserOutput (authenticated user's details)
+        user_update: User detail schema object
+
+    Returns:
+        UserUpdateOutput
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=401, detail="Access denied. Admin role required."
+        )
+
+    with unit_of_work:
+        target_user = unit_of_work.user.get(user_id=user_id)
+        if target_user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        unit_of_work.user.update(
+            user_id=user_id, **user_update.model_dump(exclude_none=True)
+        )
+    with unit_of_work:
+        updated_user = unit_of_work.user.get(user_id=user_id)
+        return UserUpdateOutput(**model_to_dict(updated_user))
+
+
+def delete(user_id: UUID, unit_of_work: BaseUnitOfWork, current_user: UserOutput):
+    """
+    Delete existing user
+
+    Parameters:
+        user_id: UUID
+        unit_of_work: BaseUnitOfWork
+        current_user: UserOutput (authenticated user's details)
+
+    Returns:
+        Bool
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=401, detail="Access denied. Admin role required."
+        )
+    with unit_of_work:
+        user = unit_of_work.user.delete(user_id=user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
 
 def login(login_data: UserLoginInput, unit_of_work: BaseUnitOfWork) -> UserLoginOutput:
@@ -208,3 +278,21 @@ def get_current_user(
         raise HTTPException(status_code=500, detail="Invalid Token")
 
     return UserOutput(**decoded_token)
+
+
+def refresh_token(token: str) -> dict:
+    """
+    refresh access token
+
+    Args:
+        token: current token
+
+    Returns:
+        dict: containing access_token and token_type
+
+    """
+    to_encode = jwt.decode(
+        token, app_config["SECRET_KEY"], algorithms=app_config["ALGORITHM"]
+    )
+    access_token = create_access_token(to_encode)
+    return {"access_token": access_token, "token_type": "Bearer"}

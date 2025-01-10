@@ -1,12 +1,26 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, Query
 
-from app.schemas.mcq_schemas import UserOutput
-from app.services import McqUnitOfWork, mcq_services, user_services
+from app.schemas.mcq_schemas import (
+    PaginatedResponse,
+    SubmissionInput,
+    SubmissionOutput,
+    UserHistoryInput,
+    UserOutput,
+)
+from app.services import (
+    HistoryUnitOfWork,
+    McqUnitOfWork,
+    SubmissionUnitOfWork,
+    mcq_services,
+    user_services,
+)
 
-router = APIRouter(prefix="/mcqs", tags=["User Routes for MCQ app"])
+router = APIRouter(prefix="/quizify/mcqs", tags=["User Routes for MCQ app"])
 
 
-@router.get("/types", response_model=list[str])
+@router.get("/types", response_model=List[str])
 def get_mcq_types(current_user: UserOutput = Depends(user_services.get_current_user)):
     """
     Endpoint to fetch distinct MCQ types.
@@ -15,7 +29,7 @@ def get_mcq_types(current_user: UserOutput = Depends(user_services.get_current_u
     return mcq_services.fetch_mcq_types(unit_of_work=unit_of_work)
 
 
-@router.get("")
+@router.get("/", response_model=PaginatedResponse)
 async def get_random_mcqs(
     type: str = Query(..., description="MCQ type to filter by"),
     page_size: int = Query(10, le=100, description="Number of MCQs to return"),
@@ -37,3 +51,32 @@ async def get_random_mcqs(
         unit_of_work=unit_of_work, type=type, page_size=page_size, page=page
     )
     return mcqs
+
+
+@router.post("/submit", response_model=SubmissionOutput)
+def submit_answers(
+    submission: SubmissionInput,
+    current_user: UserOutput = Depends(user_services.get_current_user),
+):
+    """
+    Endpoint to submit MCQ.
+    """
+    unit_of_work = SubmissionUnitOfWork()
+    result = mcq_services.process_submission(
+        submission=submission, unit_of_work=unit_of_work, current_user=current_user
+    )
+    return result
+
+
+@router.post("/history", response_model=List[UserHistoryInput])
+def user_submission_history(
+    current_user: UserOutput = Depends(user_services.get_current_user),
+):
+    """
+    Endpoint to see user's submissions history.
+    """
+    unit_of_work = HistoryUnitOfWork()
+    result = mcq_services.view_history_of_submission_of_user(
+        unit_of_work=unit_of_work, current_user=current_user
+    )
+    return result

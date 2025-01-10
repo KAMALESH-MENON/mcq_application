@@ -22,32 +22,30 @@ class UserRepository(BaseRepository[User]):
         """
         self.session = session
 
-    def get(self, user_id: UUID) -> Union[UserOutput, None]:
+    def get(self, user_id: UUID) -> User:
         """
         Retrieve a single user by their UUID.
 
         Parameters: user_id : UUID
 
-        Returns: Union[UserOutput, None]
-            The user details as a UserOutput object if found, otherwise None.
+        Returns: User
+            The User object
+
         """
         user = self.session.query(User).filter(User.user_id == user_id).first()
-        if user:
-            return UserOutput(**user.__dict__)
-        return None
+        return user
 
-    def get_all(self) -> List[Union[UserOutput, None]]:
+    def get_all(self) -> List[User]:
         """
         Retrieve all users from the database.
 
-        Returns: List[Union[UserOutput, None]]
-            A list of UserOutput objects representing all users.
+        Returns: List[User]
+            A list of User objects.
         """
-        target_users = self.session.query(User).all()
-        users = [UserOutput(**user.__dict__) for user in target_users]
+        users = self.session.query(User).all()
         return users
 
-    def add(self, user: UserRegisterInput):
+    def add(self, user: UserRegisterInput) -> None:
         """
         Add a new user to the database.
 
@@ -63,7 +61,7 @@ class UserRepository(BaseRepository[User]):
             raise ValueError("Email already exists.")
         self.session.add(user)
 
-    def update(self, user_id: UUID, **kwargs):
+    def update(self, user_id: UUID, **kwargs) -> None:
         """
         Update user details.
 
@@ -73,25 +71,23 @@ class UserRepository(BaseRepository[User]):
             **kwargs : dict
                 Key-value pairs of the attributes to update.
         """
-        existing_user = (
-            self.session.query(User).filter_by(username=kwargs.user.username).first()
-        )
+        existing_user = self.get(user_id=user_id)
         if existing_user:
-            user = self.get(user_id)
             for key, value in kwargs.items():
-                setattr(user, key, value)
-            self.session.commit()
+                setattr(existing_user, key, value)
 
-    def delete(self, user_id: UUID):
+    def delete(self, user_id: UUID) -> bool:
         """
         Delete a user from the database.
 
         Parameters: user_id : UUID
             The unique identifier of the user to delete.
         """
-        user = self.get(user_id)
+        user = self.session.query(User).filter(User.user_id == user_id).first()
+        if user is None:
+            return False
         self.session.delete(user)
-        self.session.commit()
+        return True
 
     def check_username_exists(self, username: str) -> Union[User, None]:
         """
