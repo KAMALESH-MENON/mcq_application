@@ -229,7 +229,9 @@ def process_submission(
 
             submission_details.append(AttemptedMcqWithAnswer(**mcq_dict))
 
-        percentage = (total_score / total_questions) * 100
+        percentage = (
+            (total_score / total_questions) * 100 if total_questions != 0 else 0
+        )
 
         user_history = UserHistory(
             user_id=user_id,
