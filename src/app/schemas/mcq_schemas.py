@@ -132,6 +132,7 @@ class SubmissionOutput(BaseModel):
 
 
 class UserHistoryInput(BaseModel):
+    history_id: UUID4
     user_id: UUID4
     total_score: float
     percentage: float
