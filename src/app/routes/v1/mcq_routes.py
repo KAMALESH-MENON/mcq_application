@@ -68,7 +68,7 @@ def submit_answers(
     return result
 
 
-@router.post("/mcqs/history", response_model=List[UserHistoryInput])
+@router.get("/mcqs/history", response_model=List[UserHistoryInput])
 def user_submission_history(
     current_user: UserOutput = Depends(user_services.get_current_user),
 ):
