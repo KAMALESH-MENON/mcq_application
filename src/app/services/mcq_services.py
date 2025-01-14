@@ -1,4 +1,5 @@
 import random
+from typing import List
 
 import pandas as pd
 from fastapi import HTTPException, UploadFile
@@ -12,6 +13,7 @@ from app.schemas.mcq_schemas import (
     PaginatedResponse,
     SubmissionInput,
     SubmissionOutput,
+    TypeEnum,
     UserHistoryInput,
     UserOutput,
 )
@@ -22,7 +24,7 @@ from app.services.unit_of_work import (
 )
 
 
-def fetch_mcq_types(unit_of_work: BaseUnitOfWork) -> list[str]:
+def fetch_mcq_types(unit_of_work: BaseUnitOfWork) -> List[TypeEnum]:
     """
     Retrieve distinct MCQ types using Unit of Work.
 
@@ -30,10 +32,11 @@ def fetch_mcq_types(unit_of_work: BaseUnitOfWork) -> list[str]:
         unit_of_work (BaseUnitOfWork): UnitOfWork instance.
 
     Returns:
-        list[str]: List of distinct MCQ types.
+        list[TypeEnum]: List of MCQ types.
     """
     with unit_of_work:
-        return unit_of_work.mcq.get_mcq_types()
+        types = unit_of_work.mcq.get_mcq_types()
+        return [TypeEnum(str(type_[0])) for type_ in types]
 
 
 def add_mcq(
