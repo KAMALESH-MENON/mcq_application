@@ -93,5 +93,4 @@ class McqRepository(BaseRepository[MCQ]):
         Returns:
             list[str]: List of distinct MCQ types.
         """
-        types = self.session.query(distinct(MCQ.type)).all()
-        return [str(type_[0]) for type_ in types]
+        return self.session.query(distinct(MCQ.type)).all()
