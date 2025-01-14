@@ -6,6 +6,7 @@ from app.schemas.mcq_schemas import (
     PaginatedResponse,
     SubmissionInput,
     SubmissionOutput,
+    TypeEnum,
     UserHistoryInput,
     UserOutput,
 )
@@ -20,7 +21,7 @@ from app.services import (
 router = APIRouter(tags=["User Routes for MCQ app"])
 
 
-@router.get("/mcq/types", response_model=List[str])
+@router.get("/mcq/types", response_model=list[TypeEnum])
 def get_mcq_types(current_user: UserOutput = Depends(user_services.get_current_user)):
     """
     Endpoint to fetch distinct MCQ types.
