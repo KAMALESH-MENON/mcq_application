@@ -35,17 +35,22 @@ class McqRepository(BaseRepository[MCQ]):
     def get_all(
         self,
         type_: Optional[str] = None,
+        question: Optional[str] = None,
     ) -> List[MCQ]:
         """
         Retrieve all mcq from the database.
 
         Returns: List[MCQ]
             A list of MCQ objects.
+            unit_of_work.session.query(MCQ).filter_by(question=row.get("question")).first()
         """
         query = self.session.query(MCQ)
 
         if type_:
             query = query.filter(MCQ.type == type_)
+
+        if question:
+            query = query.filter(MCQ.question == question)
 
         return query.all()
 
