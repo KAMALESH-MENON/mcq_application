@@ -1,3 +1,4 @@
+import json
 import random
 from typing import List
 
@@ -89,7 +90,7 @@ def bulk_add_mcqs(
 
     Raises:
         HTTPException: If the user is not an admin.
-        HTTPException: The file format is invalid.
+        HTTPException: The file format is invalid or if validation fails.
     """
     if current_user.role != "admin":
         raise HTTPException(
@@ -102,15 +103,60 @@ def bulk_add_mcqs(
         )
 
     try:
-        df = pd.read_excel(file.file)
+        df = pd.read_excel(file.file, dtype=str, keep_default_na=False)
+
+        required_columns = [
+            "category",
+            "question",
+            "option A",
+            "option B",
+            "option C",
+            "option D",
+            "correct_option",
+        ]
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing required columns: {', '.join(missing_columns)}",
+            )
+
+        invalid_entries = []
+        for index, row in df.iterrows():
+            for column in required_columns:
+                if row[column] in [""] or (
+                    column == "correct_option"
+                    and row[column] not in ["a", "b", "c", "d"]
+                ):
+                    invalid_entries.append(f"Row {index + 2}, Column '{column}'")
+
+        if invalid_entries:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Validation errors in entries: {'; '.join(invalid_entries)}",
+            )
+
         added_count = 0
         with unit_of_work:
             for _, row in df.iterrows():
+                options_dict = {
+                    "a": row.get("option A"),
+                    "b": row.get("option B"),
+                    "c": row.get("option C"),
+                    "d": row.get("option D"),
+                }
+
+                # Convert the dictionary to a JSON string
+                options_json = json.dumps(options_dict)
+
+                # Parse the JSON string back into a dictionary to avoid escape characters
+                options_cleaned = json.loads(options_json)
+
                 mcq_data = {
-                    "type": row.get("type"),
+                    "type": row.get("category"),
                     "question": row.get("question"),
-                    "options": row.get("options"),
-                    "correct_option": row.get("correct_answer"),
+                    "options": options_cleaned,
+                    "correct_option": row["correct_option"],
                     "created_by": current_user.user_id,
                 }
                 mcq = MCQ(**mcq_data)
@@ -118,6 +164,9 @@ def bulk_add_mcqs(
                 added_count += 1
 
         return added_count
+
+    except HTTPException as e:
+        raise e
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
