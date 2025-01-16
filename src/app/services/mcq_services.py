@@ -78,7 +78,7 @@ def bulk_add_mcqs(
     unit_of_work: BaseUnitOfWork, file: UploadFile, current_user: UserOutput
 ) -> int:
     """
-    Bulk adds MCQs from an uploaded file to the database.
+    Bulk adds MCQs from an uploaded file to the database if the question does not exist in database otherwise skips.
 
     Args:
         unit_of_work (BaseUnitOfWork): The unit of work object that manages database transactions and repositories.
@@ -137,33 +137,39 @@ def bulk_add_mcqs(
             )
 
         added_count = 0
+        skipped_count = 0
         with unit_of_work:
             for _, row in df.iterrows():
-                options_dict = {
-                    "a": row.get("option A"),
-                    "b": row.get("option B"),
-                    "c": row.get("option C"),
-                    "d": row.get("option D"),
-                }
+                question_exist = unit_of_work.mcq.get_all(question=row.get("question"))
 
-                # Convert the dictionary to a JSON string
-                options_json = json.dumps(options_dict)
+                if question_exist:
+                    skipped_count += 1
+                else:
+                    options_dict = {
+                        "a": row.get("option A"),
+                        "b": row.get("option B"),
+                        "c": row.get("option C"),
+                        "d": row.get("option D"),
+                    }
 
-                # Parse the JSON string back into a dictionary to avoid escape characters
-                options_cleaned = json.loads(options_json)
+                    # Convert the dictionary to a JSON string
+                    options_json = json.dumps(options_dict)
 
-                mcq_data = {
-                    "type": row.get("category"),
-                    "question": row.get("question"),
-                    "options": options_cleaned,
-                    "correct_option": row["correct_option"],
-                    "created_by": current_user.user_id,
-                }
-                mcq = MCQ(**mcq_data)
-                unit_of_work.mcq.add(mcq)
-                added_count += 1
+                    # Parse the JSON string back into a dictionary to avoid escape characters
+                    options_cleaned = json.loads(options_json)
 
-        return added_count
+                    mcq_data = {
+                        "type": row.get("category"),
+                        "question": row.get("question"),
+                        "options": options_cleaned,
+                        "correct_option": row["correct_option"],
+                        "created_by": current_user.user_id,
+                    }
+                    mcq = MCQ(**mcq_data)
+                    unit_of_work.mcq.add(mcq)
+                    added_count += 1
+
+        return added_count, skipped_count
 
     except HTTPException as e:
         raise e
