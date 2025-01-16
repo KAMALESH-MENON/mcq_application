@@ -199,7 +199,7 @@ def get_all(
                 "mcq_id": mcq.mcq_id,
                 "type": mcq.type,
                 "question": mcq.question,
-                "options": eval(mcq.options),
+                "options": mcq.options,
             }
             mcqs_list_object.append(MCQDisplay(**mcq_dict))
 
@@ -280,7 +280,7 @@ def process_submission(
                 "mcq_id": mcq.mcq_id,
                 "type": mcq.type,
                 "question": mcq.question,
-                "options": eval(mcq.options),
+                "options": mcq.options,
                 "correct_option": mcq.correct_option,
                 "user_answer": attempted_mcq.user_answer.value,
             }
