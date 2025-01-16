@@ -18,7 +18,7 @@ from app.services import (
     user_services,
 )
 
-router = APIRouter(tags=["User Routes for MCQ app"])
+router = APIRouter(tags=["MCQ Routes"])
 
 
 @router.get("/mcq/types", response_model=list[TypeEnum])
