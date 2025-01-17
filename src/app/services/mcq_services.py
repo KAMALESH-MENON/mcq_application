@@ -1,11 +1,12 @@
 import json
 import random
 from typing import List
+from uuid import UUID
 
 import pandas as pd
 from fastapi import HTTPException, UploadFile
 
-from app.models.data_models import MCQ, UserHistory, UserSubmission
+from app.models.data_models import MCQ, UserHistory
 from app.schemas.mcq_schemas import (
     AttemptedMcqWithAnswer,
     MCQCreate,
@@ -259,6 +260,7 @@ def process_submission(
     submission_details = []
 
     with unit_of_work as uow:
+        details_list = []
         for attempted_mcq in submission.attempted:
             mcq = uow.mcq.get(mcq_id=attempted_mcq.mcq_id)
             if not mcq:
@@ -268,24 +270,27 @@ def process_submission(
             is_correct = attempted_mcq.user_answer.value == mcq.correct_option
             total_score += 1 if is_correct else 0
 
-            user_submission = UserSubmission(
-                user_id=current_user.user_id,
-                mcq_id=mcq.mcq_id,
-                user_answer=attempted_mcq.user_answer.value,
-                is_correct=is_correct,
-            )
-            uow.submission.add(user_submission)
-
-            mcq_dict = {
-                "mcq_id": mcq.mcq_id,
+            details_dict = {
+                "mcq_id": str(mcq.mcq_id),
                 "type": mcq.type,
                 "question": mcq.question,
                 "options": mcq.options,
                 "correct_option": mcq.correct_option,
                 "user_answer": attempted_mcq.user_answer.value,
+                "is_correct": is_correct,
             }
+            details_list.append(details_dict)
 
-            submission_details.append(AttemptedMcqWithAnswer(**mcq_dict))
+        mcq_dict = {
+            "mcq_id": mcq.mcq_id,
+            "type": mcq.type,
+            "question": mcq.question,
+            "options": mcq.options,
+            "correct_option": mcq.correct_option,
+            "user_answer": attempted_mcq.user_answer.value,
+        }
+
+        submission_details.append(AttemptedMcqWithAnswer(**mcq_dict))
 
         percentage = (
             (total_score / total_questions) * 100 if total_questions != 0 else 0
@@ -296,6 +301,7 @@ def process_submission(
             total_score=total_score,
             percentage=percentage,
             total_attempts=total_questions,
+            details=details_list,
         )
         uow.history.add(user_history)
 
@@ -327,3 +333,24 @@ def view_history_of_submission_of_user(
     with unit_of_work as uow:
         histories = uow.history.get_all(user_id=current_user.user_id)
         return [UserHistoryInput(**history.__dict__) for history in histories]
+
+
+def view_particular_history(
+    unit_of_work: SubmissionUnitOfWork,
+    current_user: UserOutput,
+    history_id: UUID,
+) -> SubmissionOutput:
+    """
+    Retrieves a particular submission details.
+    """
+    with unit_of_work as uow:
+        history = uow.history.get(history_id=history_id)
+        history_dict = history.__dict__
+        print(history_dict)
+        return SubmissionOutput(
+            user_id=history_dict.get("user_id"),
+            data=history_dict.get("details"),
+            total_score=history_dict.get("total_score"),
+            total_attempts=history_dict.get("total_attempts"),
+            percentage=history_dict.get("percentage"),
+        )

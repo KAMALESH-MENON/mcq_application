@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
@@ -79,5 +80,20 @@ def user_submission_history(
     unit_of_work = HistoryUnitOfWork()
     result = mcq_services.view_history_of_submission_of_user(
         unit_of_work=unit_of_work, current_user=current_user
+    )
+    return result
+
+
+@router.get("/mcqs/history/{history_id}", response_model=SubmissionOutput)
+def user_submission_history_by_id(
+    history_id: UUID,
+    current_user: UserOutput = Depends(user_services.get_current_user),
+):
+    """
+    Endpoint to see user's particular submission.
+    """
+    unit_of_work = SubmissionUnitOfWork()
+    result = mcq_services.view_particular_history(
+        unit_of_work=unit_of_work, current_user=current_user, history_id=history_id
     )
     return result
