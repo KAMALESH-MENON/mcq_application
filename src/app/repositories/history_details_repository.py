@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -53,7 +54,13 @@ class HistoryDetailsRepository(BaseRepository[UserHistoryDetail]):
         """
         Add a new History to the database.
 
-        Parameters: user : UserHistoryInput
-            The history details for UserHistoryInput.
+        Parameters: user : HistoryDetailsInput
+            The history details for HistoryDetailsInput.
         """
         self.session.add(history)
+
+    def update(self, detail_id: UUID, **kwargs):
+        pass
+
+    def delete(self, detail_id: UUID):
+        pass
