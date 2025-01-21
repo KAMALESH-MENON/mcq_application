@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models.data_models import UserHistoryDetail
 from app.repositories.base_repository import BaseRepository
-from app.schemas.mcq_schemas import UserHistoryInput
+from app.schemas.mcq_schemas import HistoryDetailsInput
 
 
 class HistoryDetailsRepository(BaseRepository[UserHistoryDetail]):
@@ -49,7 +49,7 @@ class HistoryDetailsRepository(BaseRepository[UserHistoryDetail]):
 
         return query.all()
 
-    def add(self, history: UserHistoryInput):
+    def add(self, history: HistoryDetailsInput):
         """
         Add a new History to the database.
 
