@@ -129,7 +129,6 @@ def create_mcq(
     Endpoint to create a new MCQ.
     """
     unit_of_work = McqUnitOfWork()
-    mcq_data = MCQ(**mcq_data.model_dump(), created_by=current_user.user_id)
     return mcq_services.add_mcq(
         mcq=mcq_data, unit_of_work=unit_of_work, current_user=current_user
     )
