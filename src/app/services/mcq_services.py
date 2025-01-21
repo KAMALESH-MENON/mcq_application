@@ -45,7 +45,7 @@ def add_mcq(
     unit_of_work: BaseUnitOfWork, mcq: MCQCreate, current_user: UserOutput
 ) -> MCQCreateOutput:
     """
-    Adds a new MCQ to the database. Only user with role as "admin" can create the mcq.
+    Adds a new MCQ to the database. Only users with the role of "admin" can create the MCQ.
 
     Args:
         unit_of_work (BaseUnitOfWork): The unit of work object that manages database transactions and repositories.
@@ -64,14 +64,22 @@ def add_mcq(
             status_code=401, detail="Access denied. Admin role required."
         )
     with unit_of_work:
-        mcq_data = mcq.model_dump()
-        mcq = MCQ(**mcq_data)
         existing_types = fetch_mcq_types(unit_of_work=unit_of_work)
         if mcq.type not in existing_types:
-            raise HTTPException(status_code=400, detail="Invalid mcq type input.")
+            raise HTTPException(status_code=400, detail="Invalid MCQ type input.")
+
+        duplicate_mcq = (
+            unit_of_work.session.query(MCQ).filter_by(question=mcq.question).first()
+        )
+        if duplicate_mcq:
+            raise HTTPException(status_code=400, detail="Duplicate question found.")
+
+        mcq_data = mcq.model_dump()
+        mcq = MCQ(**mcq_data)
         unit_of_work.session.add(mcq)
         unit_of_work.session.flush()
         unit_of_work.session.refresh(mcq)
+
         return MCQCreateOutput(**mcq.__dict__)
 
 
