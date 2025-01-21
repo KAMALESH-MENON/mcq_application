@@ -345,10 +345,27 @@ def view_particular_history(
     with unit_of_work as uow:
         history = uow.history.get(history_id=history_id)
         history_dict = history.__dict__
-        print(history_dict)
+
+        details = uow.history_details.get_all(history_id=history_id)
+
+        details_list = []
+        for detail in details:
+            mcq = uow.mcq.get(mcq_id=detail.mcq_id)
+            details_list.append(
+                {
+                    "mcq_id": str(detail.mcq_id),
+                    "type": mcq.type,
+                    "question": mcq.question,
+                    "options": mcq.options,
+                    "correct_option": mcq.correct_option,
+                    "user_answer": detail.user_answer,
+                    "is_correct": detail.is_correct,
+                }
+            )
+
         return SubmissionOutput(
             user_id=history_dict.get("user_id"),
-            data=history_dict.get("details"),
+            data=details_list,
             total_score=history_dict.get("total_score"),
             total_attempts=history_dict.get("total_attempts"),
             percentage=history_dict.get("percentage"),
