@@ -6,7 +6,7 @@ from uuid import UUID
 import pandas as pd
 from fastapi import HTTPException, UploadFile
 
-from app.models.data_models import MCQ, UserHistory
+from app.models.data_models import MCQ, UserHistory, UserHistoryDetail
 from app.schemas.mcq_schemas import (
     AttemptedMcqWithAnswer,
     MCQCreate,
@@ -260,7 +260,13 @@ def process_submission(
     submission_details = []
 
     with unit_of_work as uow:
-        details_list = []
+        user_history = UserHistory(
+            user_id=user_id,
+            total_score=0,
+            percentage=0,
+            total_attempts=total_questions,
+        )
+
         for attempted_mcq in submission.attempted:
             mcq = uow.mcq.get(mcq_id=attempted_mcq.mcq_id)
             if not mcq:
@@ -270,39 +276,32 @@ def process_submission(
             is_correct = attempted_mcq.user_answer.value == mcq.correct_option
             total_score += 1 if is_correct else 0
 
-            details_dict = {
-                "mcq_id": str(mcq.mcq_id),
-                "type": mcq.type,
-                "question": mcq.question,
-                "options": mcq.options,
-                "correct_option": mcq.correct_option,
-                "user_answer": attempted_mcq.user_answer.value,
-                "is_correct": is_correct,
-            }
-            details_list.append(details_dict)
+            detail = UserHistoryDetail(
+                history_id=user_history.history_id,
+                mcq_id=mcq.mcq_id,
+                user_answer=attempted_mcq.user_answer.value,
+                is_correct=is_correct,
+            )
+            user_history.details.append(detail)
 
-        mcq_dict = {
-            "mcq_id": mcq.mcq_id,
-            "type": mcq.type,
-            "question": mcq.question,
-            "options": mcq.options,
-            "correct_option": mcq.correct_option,
-            "user_answer": attempted_mcq.user_answer.value,
-        }
-
-        submission_details.append(AttemptedMcqWithAnswer(**mcq_dict))
+            submission_details.append(
+                AttemptedMcqWithAnswer(
+                    mcq_id=mcq.mcq_id,
+                    type=mcq.type,
+                    question=mcq.question,
+                    options=mcq.options,
+                    correct_option=mcq.correct_option,
+                    user_answer=attempted_mcq.user_answer.value,
+                )
+            )
 
         percentage = (
             (total_score / total_questions) * 100 if total_questions != 0 else 0
         )
 
-        user_history = UserHistory(
-            user_id=user_id,
-            total_score=total_score,
-            percentage=percentage,
-            total_attempts=total_questions,
-            details=details_list,
-        )
+        user_history.total_score = total_score
+        user_history.percentage = percentage
+
         uow.history.add(user_history)
 
         return SubmissionOutput(
