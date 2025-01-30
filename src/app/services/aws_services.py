@@ -1,4 +1,5 @@
 import boto3
+import requests
 from fastapi import HTTPException, UploadFile
 
 from app.config.settings import app_config
@@ -9,7 +10,7 @@ s3_client = boto3.client("s3")
 
 def upload_template(file: UploadFile, current_user: UserOutput):
     """
-    Upload a .docx file to S3 as a certificate template.
+    Upload a .jpg file to S3 as a certificate template.
     """
     if current_user.role != "admin":
         raise HTTPException(
@@ -26,3 +27,19 @@ def upload_template(file: UploadFile, current_user: UserOutput):
     s3_client.upload_fileobj(file.file, app_config["BUCKET_NAME"], file_name)
 
     return {"message": f"File uploaded successfully to {file_name}"}
+
+
+def generate_certificate(data: dict):
+    """
+    Sends a POST request to generate a certificate and retrieves the certificate URL.
+    """
+    response = requests.post(app_config["API_URL"], json=data)
+
+    if response.status_code == 200:
+        result = response.json()
+        return result.get("body")
+
+    else:
+        raise HTTPException(
+            status_code=response.status_code, detail="Certificate generation failed"
+        )
