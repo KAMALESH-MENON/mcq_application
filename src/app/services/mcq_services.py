@@ -19,6 +19,7 @@ from app.schemas.mcq_schemas import (
     UserHistoryInput,
     UserOutput,
 )
+from app.services.aws_services import generate_certificate
 from app.services.unit_of_work import (
     BaseUnitOfWork,
     HistoryUnitOfWork,
@@ -378,3 +379,28 @@ def view_particular_history(
             total_attempts=history_dict.get("total_attempts"),
             percentage=history_dict.get("percentage"),
         )
+
+
+def create_certificate(unit_of_work: SubmissionUnitOfWork, current_user: UserOutput):
+    """
+    generates a certificate
+    """
+    with unit_of_work as uow:
+        histories = uow.history.get_all(user_id=current_user.user_id)
+        last_submitted_history_dict = histories[-1].__dict__
+        last_submitted_history_id = last_submitted_history_dict.get("history_id")
+        mcq_id = uow.history_details.get_all(last_submitted_history_id)[
+            -1
+        ].__dict__.get("mcq_id")
+        mcq_type = uow.mcq.get(mcq_id=mcq_id).__dict__.get("type")
+        last_submitted_history_percentage = last_submitted_history_dict.get(
+            "percentage"
+        )
+
+    data = {
+        "name": current_user.username,
+        "type": mcq_type,
+        "percentage": last_submitted_history_percentage,
+    }
+
+    return generate_certificate(data=data)
