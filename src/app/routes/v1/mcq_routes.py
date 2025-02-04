@@ -34,7 +34,7 @@ def get_mcq_types(current_user: UserOutput = Depends(user_services.get_current_u
 @router.get("/mcq/", response_model=PaginatedResponse)
 async def get_random_mcqs(
     type: str = Query(..., description="MCQ type to filter by"),
-    page_size: int = Query(10, le=100, description="Number of MCQs to return"),
+    page_size: int = Query(10, le=100, description="Number of MCQs to attempt"),
     page: int = Query(1, ge=1, description="Page number for pagination"),
     current_user: UserOutput = Depends(user_services.get_current_user),
 ):
@@ -50,7 +50,11 @@ async def get_random_mcqs(
     """
     unit_of_work = McqUnitOfWork()
     mcqs = mcq_services.get_all(
-        unit_of_work=unit_of_work, type=type, page_size=page_size, page=page
+        unit_of_work=unit_of_work,
+        type=type,
+        page_size=page_size,
+        page=page,
+        current_user=current_user,
     )
     return mcqs
 
@@ -86,6 +90,8 @@ def generate_certificate(
 
 @router.get("/mcq/history", response_model=List[UserHistoryInput])
 def user_submission_history(
+    sort_by: str = Query(None, description="History to sort by"),
+    order: str = Query("asc", description="sort order (asc/desc)"),
     current_user: UserOutput = Depends(user_services.get_current_user),
 ):
     """
@@ -93,7 +99,10 @@ def user_submission_history(
     """
     unit_of_work = HistoryUnitOfWork()
     result = mcq_services.view_history_of_submission_of_user(
-        unit_of_work=unit_of_work, current_user=current_user
+        unit_of_work=unit_of_work,
+        current_user=current_user,
+        sort_by=sort_by,
+        order=order,
     )
     return result
 
