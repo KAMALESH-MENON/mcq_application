@@ -6,7 +6,7 @@ from uuid import UUID
 import pandas as pd
 from fastapi import HTTPException, UploadFile
 
-from app.models.data_models import MCQ, UserHistory, UserHistoryDetail
+from app.models.data_models import MCQ, Submission, UserHistory, UserHistoryDetail
 from app.schemas.mcq_schemas import (
     AttemptedMcqWithAnswer,
     MCQCreate,
@@ -193,6 +193,7 @@ def get_all(
     type: str,
     page: int,
     page_size: int,
+    current_user: UserOutput,
 ) -> dict:
     """
     Retrieve paginated MCQs with optional type filter and pagination.
@@ -201,7 +202,9 @@ def get_all(
         mcqs = unit_of_work.mcq.get_all(type_=type)
 
         if mcqs is None:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(
+                status_code=404, detail="No MCQs found for the given type"
+            )
 
         mcqs_list_object = []
         for mcq in mcqs:
@@ -213,12 +216,11 @@ def get_all(
             }
             mcqs_list_object.append(MCQDisplay(**mcq_dict))
 
-        if not mcqs_list_object:
-            raise HTTPException(
-                status_code=404, detail="No MCQs found for the given type"
-            )
+        random.shuffle(mcqs_list_object)
 
-        total_count = len(mcqs_list_object)
+        limited_mcqs_list_object = mcqs_list_object[:page_size]
+
+        total_count = len(limited_mcqs_list_object)
         total_pages = (total_count // page_size) + (
             1 if total_count % page_size > 0 else 0
         )
@@ -226,10 +228,14 @@ def get_all(
         start = (page - 1) * page_size
         end = start + page_size
 
-        random.shuffle(mcqs_list_object)
         paginated_mcqs_list_object = mcqs_list_object[start:end]
 
         next_page = page + 1 if page < total_pages else None
+
+        submission = Submission(
+            user_id=current_user.user_id, total_questions=total_count, type=type
+        )
+        unit_of_work.submission.add(submission)
 
         return PaginatedResponse(
             currentPage=page,
@@ -265,15 +271,20 @@ def process_submission(
     """
     user_id = current_user.user_id
     total_score = 0
-    total_questions = len(submission.attempted)
     submission_details = []
 
     with unit_of_work as uow:
+        last_submission_total_question = uow.submission.get_all(
+            user_id=user_id, sort_by="created_at", order="desc"
+        )
+        total_questions = last_submission_total_question[0].total_questions
+
         user_history = UserHistory(
             user_id=user_id,
             total_score=0,
             percentage=0,
             total_attempts=total_questions,
+            submission_id=last_submission_total_question[0].submission_id,
         )
 
         for attempted_mcq in submission.attempted:
@@ -323,7 +334,10 @@ def process_submission(
 
 
 def view_history_of_submission_of_user(
-    unit_of_work: HistoryUnitOfWork, current_user: UserOutput
+    unit_of_work: HistoryUnitOfWork,
+    current_user: UserOutput,
+    sort_by: str = None,
+    order: str = "asc",
 ):
     """
     Retrieves the submission histories for the current user.
@@ -339,7 +353,11 @@ def view_history_of_submission_of_user(
             A list of the user's submission history records.
     """
     with unit_of_work as uow:
-        histories = uow.history.get_all(user_id=current_user.user_id)
+        histories = uow.history.get_all(
+            user_id=current_user.user_id,
+            sort_by=sort_by,
+            order=order,
+        )
         return [UserHistoryInput(**history.__dict__) for history in histories]
 
 
@@ -386,13 +404,12 @@ def create_certificate(unit_of_work: SubmissionUnitOfWork, current_user: UserOut
     generates a certificate
     """
     with unit_of_work as uow:
-        histories = uow.history.get_all(user_id=current_user.user_id)
+        histories = uow.history.get_all(user_id=current_user.user_id, order="desc")
         last_submitted_history_dict = histories[-1].__dict__
-        last_submitted_history_id = last_submitted_history_dict.get("history_id")
-        mcq_id = uow.history_details.get_all(last_submitted_history_id)[
-            -1
-        ].__dict__.get("mcq_id")
-        mcq_type = uow.mcq.get(mcq_id=mcq_id).__dict__.get("type")
+        last_submission = uow.submission.get_all(
+            user_id=current_user.user_id, order="desc"
+        )
+        mcq_type = last_submission[0].type
         last_submitted_history_percentage = last_submitted_history_dict.get(
             "percentage"
         )
