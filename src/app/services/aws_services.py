@@ -56,7 +56,7 @@ def generate_certificate(data: dict):
         )
 
 
-def generate_presigned_url(file_key: str):
+def generate_presigned_url_func(file_key: str):
     """
     Fetches an object from S3 and returns its content.
     """

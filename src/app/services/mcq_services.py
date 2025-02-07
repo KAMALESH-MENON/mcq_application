@@ -19,7 +19,7 @@ from app.schemas.mcq_schemas import (
     UserHistoryInput,
     UserOutput,
 )
-from app.services.aws_services import generate_certificate, generate_presigned_url
+from app.services.aws_services import generate_certificate, generate_presigned_url_func
 from app.services.unit_of_work import (
     BaseUnitOfWork,
     HistoryUnitOfWork,
@@ -442,8 +442,10 @@ def generate_certificate_presigned_url(
     """
     with unit_of_work as uow:
         history = uow.history.get(history_id=history_id)
+        if not history:
+            raise HTTPException(status_code=404, detail="History not found")
         certificate = history.certificate
         if certificate:
-            return generate_presigned_url(file_key=certificate)
+            return generate_presigned_url_func(file_key=certificate)
         else:
             raise HTTPException(status_code=404, detail="Certtificate not found.")
