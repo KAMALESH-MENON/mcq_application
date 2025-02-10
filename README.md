@@ -24,7 +24,7 @@ Traditional quiz management can be time-consuming and inefficient, especially wh
   - View their submission history
 ## Flow diagram
 - **Admin**:
-  - ![alt text](files/admin-flow.png)
+  - ![alt text](files/admin-flow2.png)
 - **User**:
   - ![alt text](files/user-flow.png)
 ## Tech Stack
